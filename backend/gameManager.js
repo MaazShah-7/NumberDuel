@@ -1,68 +1,63 @@
 const { v4: uuidv4 } = require('uuid');
+const { dbRun } = require('./database');
 
 class GameManager {
-  constructor(io) {
+  constructor(io, jwtSecret) {
     this.io = io;
-    this.players = new Map(); // socket.id -> { id, username, coins, status, roomId }
+    this.jwtSecret = jwtSecret;
+    this.players = new Map(); // socket.id -> { id, username, coins, status, roomId, pfp, dbId }
     this.rooms = new Map(); // roomId -> { id, players[], stakes, range, turn, status, state }
-    this.queues = {
-      1: [], // tier 1: e.g. 50 coins
-      2: [], // tier 2: e.g. 500 coins
-      3: []  // tier 3: e.g. 5000 coins
-    };
-    
-    this.TIERS = {
-      1: { cost: 50, range: 50 },
-      2: { cost: 500, range: 500 },
-      3: { cost: 5000, range: 5000 }
-    };
+    this.queues = {}; // range -> [socket.id]
   }
 
-  registerPlayer(socket, data) {
-    const { username } = data;
+  async registerPlayer(socket, dbUser) {
     this.players.set(socket.id, {
       id: socket.id,
-      username: username || `Player_${socket.id.substring(0, 4)}`,
-      coins: 1000, // Give starting coins
+      dbId: dbUser.id,
+      username: dbUser.username,
+      coins: dbUser.coins,
+      pfp: dbUser.pfp,
       status: 'idle',
       roomId: null
     });
     socket.emit('player_info', this.players.get(socket.id));
   }
 
-  joinQueue(socket, tier) {
+  joinQueue(socket, range) {
     const player = this.players.get(socket.id);
     if (!player) return;
     
-    if (!this.TIERS[tier]) {
-      socket.emit('error_message', 'Invalid tier');
-      return;
-    }
+    // We assume 100 coins per match for global matchmaking
+    const stakes = 100;
 
-    if (player.coins < this.TIERS[tier].cost) {
+    if (player.coins < stakes) {
       socket.emit('error_message', 'Not enough coins');
       return;
     }
 
-    // Check if opponent is waiting
-    if (this.queues[tier].length > 0) {
-      const opponentId = this.queues[tier].shift();
+    if (!this.queues[range]) {
+      this.queues[range] = [];
+    }
+
+    // Check if opponent is waiting in the same range
+    if (this.queues[range].length > 0) {
+      const opponentId = this.queues[range].shift();
       // Ensure opponent is still connected
       if (this.players.has(opponentId)) {
-        this.createRoom([opponentId, socket.id], this.TIERS[tier]);
+        this.createRoom([opponentId, socket.id], stakes, range);
         return;
       }
     }
 
     // Otherwise join queue
-    this.queues[tier].push(socket.id);
+    this.queues[range].push(socket.id);
     player.status = 'queue';
-    socket.emit('queue_joined', { tier });
+    socket.emit('queue_joined', { range });
   }
 
   leaveQueue(socket) {
-    for (const tier in this.queues) {
-      this.queues[tier] = this.queues[tier].filter(id => id !== socket.id);
+    for (const range in this.queues) {
+      this.queues[range] = this.queues[range].filter(id => id !== socket.id);
     }
     const player = this.players.get(socket.id);
     if (player) {
@@ -71,25 +66,25 @@ class GameManager {
     }
   }
 
-  createPrivateRoom(socket, config) {
+  createPrivateRoom(socket, range) {
     const player = this.players.get(socket.id);
     if (!player) return;
 
-    const stakes = parseInt(config.stakes) || 100;
-    const range = parseInt(config.range) || 100;
+    const stakes = 100; // Fixed stakes or can be customized later
 
     if (player.coins < stakes) {
       socket.emit('error_message', 'Not enough coins');
       return;
     }
 
-    const roomCode = Math.floor(1000 + Math.random() * 9000).toString(); // 4 digit code
+    // Generate 7-digit code
+    const roomCode = Math.floor(1000000 + Math.random() * 9000000).toString();
     
     const room = {
       id: roomCode,
       players: [socket.id],
       stakes,
-      range,
+      range: parseInt(range) || 100,
       status: 'waiting',
       state: {},
       history: []
@@ -100,7 +95,7 @@ class GameManager {
     player.status = 'room';
     
     socket.join(roomCode);
-    socket.emit('room_created', { roomCode, stakes, range });
+    socket.emit('room_created', { roomCode, stakes, range: room.range });
   }
 
   joinPrivateRoom(socket, roomCode) {
@@ -128,17 +123,16 @@ class GameManager {
     
     socket.join(roomCode);
     
-    // Deduct coins and start setup
     this.initGame(room);
   }
 
-  createRoom(playerIds, tierConfig) {
+  createRoom(playerIds, stakes, range) {
     const roomCode = uuidv4();
     const room = {
       id: roomCode,
       players: playerIds,
-      stakes: tierConfig.cost,
-      range: tierConfig.range,
+      stakes,
+      range: parseInt(range) || 100,
       status: 'waiting',
       state: {},
       history: []
@@ -157,20 +151,29 @@ class GameManager {
     this.initGame(room);
   }
 
-  initGame(room) {
+  async initGame(room) {
     room.status = 'setup';
-    room.players.forEach(pid => {
+    
+    // Deduct coins & increment matchesPlayed in DB for both
+    for (const pid of room.players) {
       const p = this.players.get(pid);
-      p.coins -= room.stakes; // Deduct entry fee
+      p.coins -= room.stakes;
+      
+      try {
+        await dbRun('UPDATE users SET coins = coins - ?, matchesPlayed = matchesPlayed + 1 WHERE id = ?', [room.stakes, p.dbId]);
+      } catch (err) {
+        console.error('Error updating DB on game start', err);
+      }
+
       const s = this.io.sockets.sockets.get(pid);
       if(s) s.emit('player_info', p);
-    });
+    }
 
     this.io.to(room.id).emit('game_started', {
       roomId: room.id,
       stakes: room.stakes,
       range: room.range,
-      players: room.players.map(pid => ({ id: pid, username: this.players.get(pid).username }))
+      players: room.players.map(pid => ({ id: pid, username: this.players.get(pid).username, pfp: this.players.get(pid).pfp }))
     });
   }
 
@@ -248,15 +251,27 @@ class GameManager {
     }
   }
 
-  endGame(room, winnerId, loserId) {
+  async endGame(room, winnerId, loserId) {
     room.status = 'finished';
     const pot = room.stakes * 2;
     
     const winner = this.players.get(winnerId);
+    const loser = this.players.get(loserId);
+
+    // Update DB
     if (winner) {
       winner.coins += pot;
+      try {
+        await dbRun('UPDATE users SET coins = coins + ?, matchesWon = matchesWon + 1 WHERE id = ?', [pot, winner.dbId]);
+      } catch(e) { console.error(e); }
       const ws = this.io.sockets.sockets.get(winnerId);
       if(ws) ws.emit('player_info', winner);
+    }
+
+    if (loser) {
+      try {
+        await dbRun('UPDATE users SET matchesLost = matchesLost + 1 WHERE id = ?', [loser.dbId]);
+      } catch(e) { console.error(e); }
     }
 
     this.io.to(room.id).emit('game_over', {
@@ -274,7 +289,7 @@ class GameManager {
     if (!player || !player.roomId) return;
     
     const room = this.rooms.get(player.roomId);
-    if (room) {
+    if (room && room.status !== 'finished') {
       const opponentId = room.players.find(id => id !== socket.id);
       if (opponentId) {
         // Opponent wins by default
