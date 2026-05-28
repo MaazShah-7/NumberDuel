@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = 'http://localhost:3000/api'; // Change to IP address for local testing, or Render URL
+const API_URL = 'numberduel-production.up.railway.app'; // Change to IP address for local testing, or Render URL
 
 class ApiService {
   async register(username, password) {
