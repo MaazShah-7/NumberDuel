@@ -1,30 +1,62 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, ScrollView } from 'react-native';
 import { Theme } from '../theme';
 import socketService from '../services/socketService';
 
-export default function HomeScreen({ navigation, playerInfo }) {
+export default function HomeScreen({ navigation }) {
+  const [playerInfo, setPlayerInfo] = useState(null);
+  const [range, setRange] = useState('100');
   const [roomCode, setRoomCode] = useState('');
 
-  const joinQueue = (tier) => {
+  useEffect(() => {
+    const socket = socketService.getSocket();
+    if (!socket) return;
+
+    socket.on('player_info', (data) => {
+      setPlayerInfo(data);
+    });
+
+    socket.on('error_message', (msg) => {
+      Alert.alert('Error', msg);
+    });
+
+    return () => {
+      socket.off('player_info');
+      socket.off('error_message');
+    };
+  }, []);
+
+  const handleJoinRandomMatch = () => {
+    const rangeNum = parseInt(range);
+    if (isNaN(rangeNum) || rangeNum < 2) {
+      Alert.alert('Invalid Range', 'Please enter a valid range (e.g. 100)');
+      return;
+    }
     const socket = socketService.getSocket();
     if (socket) {
-      socket.emit('join_queue', tier);
-      navigation.navigate('Lobby', { mode: 'queue', tier });
+      socket.emit('join_queue', rangeNum);
+      navigation.navigate('Lobby', { mode: 'queue', range: rangeNum });
     }
   };
 
-  const createPrivateRoom = () => {
+  const handleCreatePrivateRoom = () => {
+    const rangeNum = parseInt(range);
+    if (isNaN(rangeNum) || rangeNum < 2) {
+      Alert.alert('Invalid Range', 'Please enter a valid range (e.g. 100)');
+      return;
+    }
     const socket = socketService.getSocket();
     if (socket) {
-      // Defaulting to 100 stakes, 100 range for demo
-      socket.emit('create_private_room', { stakes: 100, range: 100 });
+      socket.emit('create_private_room', rangeNum);
       navigation.navigate('Lobby', { mode: 'private' });
     }
   };
 
-  const joinPrivateRoom = () => {
-    if (!roomCode) return;
+  const handleJoinPrivateRoom = () => {
+    if (!roomCode || roomCode.length !== 7) {
+      Alert.alert('Invalid Code', 'Please enter a 7-digit room code');
+      return;
+    }
     const socket = socketService.getSocket();
     if (socket) {
       socket.emit('join_private_room', roomCode);
@@ -35,47 +67,51 @@ export default function HomeScreen({ navigation, playerInfo }) {
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ alignItems: 'center', paddingBottom: 40 }}>
       {/* Header Profile */}
-      <View style={styles.profileCard}>
+      <TouchableOpacity style={styles.profileCard} onPress={() => navigation.navigate('Profile')}>
+        <Text style={styles.pfp}>{playerInfo?.pfp || '👤'}</Text>
         <Text style={styles.username}>{playerInfo?.username || 'Connecting...'}</Text>
         <Text style={styles.coins}>💰 {playerInfo?.coins || 0} Coins</Text>
+        <Text style={styles.editHint}>Tap to view/edit profile</Text>
+      </TouchableOpacity>
+
+      <Text style={styles.sectionTitle}>Game Settings</Text>
+      <View style={styles.rangeContainer}>
+        <Text style={styles.rangeLabel}>Choose Number Range (1 to X):</Text>
+        <TextInput
+          style={styles.rangeInput}
+          keyboardType="numeric"
+          value={range}
+          onChangeText={setRange}
+          placeholder="e.g. 100"
+          placeholderTextColor="#888"
+        />
       </View>
-
-      <Text style={styles.sectionTitle}>Global Matchmaking</Text>
-      
-      {/* Tiers */}
-      <TouchableOpacity style={styles.tierButton} onPress={() => joinQueue(1)}>
-        <Text style={styles.tierTitle}>Tier 1: Novice</Text>
-        <Text style={styles.tierSubtitle}>50 Coins | Guess 1-50</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={[styles.tierButton, { borderColor: '#FFC107' }]} onPress={() => joinQueue(2)}>
-        <Text style={styles.tierTitle}>Tier 2: Pro</Text>
-        <Text style={styles.tierSubtitle}>500 Coins | Guess 1-500</Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity style={[styles.tierButton, { borderColor: '#E94560' }]} onPress={() => joinQueue(3)}>
-        <Text style={styles.tierTitle}>Tier 3: Legend</Text>
-        <Text style={styles.tierSubtitle}>5000 Coins | Guess 1-5000</Text>
-      </TouchableOpacity>
 
       <View style={styles.divider} />
 
-      <Text style={styles.sectionTitle}>Play with Friends</Text>
+      <Text style={styles.sectionTitle}>Play</Text>
       
-      <TouchableOpacity style={styles.actionButton} onPress={createPrivateRoom}>
-        <Text style={styles.actionButtonText}>Create Private Room</Text>
+      <TouchableOpacity style={styles.playButton} onPress={handleJoinRandomMatch}>
+        <Text style={styles.playButtonText}>Join Random Match</Text>
+        <Text style={styles.playSubtitle}>Plays against someone with the same range</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity style={[styles.playButton, { backgroundColor: Theme.colors.accent }]} onPress={handleCreatePrivateRoom}>
+        <Text style={styles.playButtonText}>Create Private Room</Text>
+        <Text style={styles.playSubtitle}>Generate a 7-digit code for a friend</Text>
       </TouchableOpacity>
 
       <View style={styles.joinRow}>
         <TextInput
           style={styles.input}
-          placeholder="Enter Room Code"
+          placeholder="7-Digit Room Code"
           placeholderTextColor="#888"
           value={roomCode}
           onChangeText={setRoomCode}
           keyboardType="numeric"
+          maxLength={7}
         />
-        <TouchableOpacity style={styles.joinButton} onPress={joinPrivateRoom}>
+        <TouchableOpacity style={styles.joinButton} onPress={handleJoinPrivateRoom}>
           <Text style={styles.joinButtonText}>Join</Text>
         </TouchableOpacity>
       </View>
@@ -96,21 +132,30 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 15,
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 20,
     borderWidth: 1,
     borderColor: Theme.colors.border,
     elevation: 5,
+  },
+  pfp: {
+    fontSize: 48,
+    marginBottom: 10,
   },
   username: {
     fontSize: 24,
     fontWeight: 'bold',
     color: Theme.colors.text,
-    marginBottom: 10,
+    marginBottom: 5,
   },
   coins: {
     fontSize: 20,
     color: Theme.colors.warning,
     fontWeight: '600',
+  },
+  editHint: {
+    color: '#888',
+    fontSize: 12,
+    marginTop: 10,
   },
   sectionTitle: {
     fontSize: 22,
@@ -120,24 +165,28 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     marginTop: 10,
   },
-  tierButton: {
+  rangeContainer: {
     width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: Theme.colors.card,
-    padding: 20,
+    padding: 15,
     borderRadius: 10,
-    marginBottom: 15,
-    borderLeftWidth: 5,
-    borderColor: Theme.colors.success,
   },
-  tierTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+  rangeLabel: {
     color: Theme.colors.text,
+    fontSize: 16,
   },
-  tierSubtitle: {
-    fontSize: 14,
-    color: '#aaa',
-    marginTop: 5,
+  rangeInput: {
+    backgroundColor: Theme.colors.background,
+    color: Theme.colors.text,
+    padding: 10,
+    borderRadius: 8,
+    width: 80,
+    textAlign: 'center',
+    borderWidth: 1,
+    borderColor: Theme.colors.border,
   },
   divider: {
     height: 1,
@@ -145,23 +194,29 @@ const styles = StyleSheet.create({
     width: '100%',
     marginVertical: 20,
   },
-  actionButton: {
+  playButton: {
     width: '100%',
     backgroundColor: Theme.colors.primary,
-    padding: 15,
+    padding: 20,
     borderRadius: 10,
     alignItems: 'center',
     marginBottom: 15,
   },
-  actionButtonText: {
+  playButtonText: {
     color: 'white',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
+  },
+  playSubtitle: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 12,
+    marginTop: 5,
   },
   joinRow: {
     flexDirection: 'row',
     width: '100%',
     alignItems: 'center',
+    marginTop: 10,
   },
   input: {
     flex: 1,
@@ -174,7 +229,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   joinButton: {
-    backgroundColor: Theme.colors.accent,
+    backgroundColor: Theme.colors.success,
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',
