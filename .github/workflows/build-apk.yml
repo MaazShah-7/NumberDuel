@@ -8,6 +8,11 @@ on:
 jobs:
   build-android:
     runs-on: ubuntu-latest
+    env:
+      # Limits Gradle's daemon memory pool
+  GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m"
+  # Prevents Node/Metro bundler from memory-hogging
+  NODE_OPTIONS: "--max-old-space-size=2048"
     
     defaults:
       run:
@@ -36,7 +41,7 @@ jobs:
 
       - name: Build APK
         working-directory: ./frontend/android
-        run: ./gradlew assembleRelease
+        run: ./gradlew assembleRelease --no-daemon
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
@@ -44,3 +49,4 @@ jobs:
           name: number-duel-apk
           path: frontend/android/app/build/outputs/apk/release/app-release.apk
           retention-days: 7
+    
