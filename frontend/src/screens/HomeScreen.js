@@ -74,17 +74,18 @@ export default function HomeScreen({ navigation }) {
         <Text style={styles.editHint}>Tap to view/edit profile</Text>
       </TouchableOpacity>
 
-      <Text style={styles.sectionTitle}>Game Settings</Text>
-      <View style={styles.rangeContainer}>
-        <Text style={styles.rangeLabel}>Choose Number Range (1 to X):</Text>
-        <TextInput
-          style={styles.rangeInput}
-          keyboardType="numeric"
-          value={range}
-          onChangeText={setRange}
-          placeholder="e.g. 100"
-          placeholderTextColor="#888"
-        />
+      <Text style={styles.sectionTitle}>Select Tier</Text>
+      <View style={styles.tiersContainer}>
+        {[100, 500, 1000].map(tier => (
+          <TouchableOpacity 
+            key={tier} 
+            style={[styles.tierButton, parseInt(range) === tier && styles.tierButtonActive]}
+            onPress={() => setRange(tier.toString())}
+          >
+            <Text style={[styles.tierText, parseInt(range) === tier && styles.tierTextActive]}>1 - {tier}</Text>
+            <Text style={styles.tierSubText}>{tier} Coins</Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       <View style={styles.divider} />
@@ -165,28 +166,37 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     marginTop: 10,
   },
-  rangeContainer: {
+  tiersContainer: {
     width: '100%',
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  tierButton: {
+    flex: 1,
     backgroundColor: Theme.colors.card,
     padding: 15,
     borderRadius: 10,
+    borderWidth: 2,
+    borderColor: Theme.colors.border,
+    alignItems: 'center',
+    marginHorizontal: 5,
   },
-  rangeLabel: {
+  tierButtonActive: {
+    borderColor: Theme.colors.primary,
+    backgroundColor: 'rgba(2, 132, 199, 0.2)',
+  },
+  tierText: {
     color: Theme.colors.text,
     fontSize: 16,
+    fontWeight: 'bold',
   },
-  rangeInput: {
-    backgroundColor: Theme.colors.background,
-    color: Theme.colors.text,
-    padding: 10,
-    borderRadius: 8,
-    width: 80,
-    textAlign: 'center',
-    borderWidth: 1,
-    borderColor: Theme.colors.border,
+  tierTextActive: {
+    color: Theme.colors.primary,
+  },
+  tierSubText: {
+    color: '#888',
+    fontSize: 12,
+    marginTop: 5,
   },
   divider: {
     height: 1,
