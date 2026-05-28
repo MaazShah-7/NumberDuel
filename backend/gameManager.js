@@ -278,7 +278,11 @@ class GameManager {
       winner: winnerId,
       winnerName: winner ? winner.username : 'Opponent',
       pot: pot,
-      history: room.history
+      history: room.history,
+      targets: {
+        [room.players[0]]: room.state[room.players[0]]?.target,
+        [room.players[1]]: room.state[room.players[1]]?.target
+      }
     });
 
     this.cleanupRoom(room.id);
@@ -324,7 +328,3 @@ class GameManager {
       });
       this.rooms.delete(roomId);
     }
-  }
-}
-
-module.exports = GameManager;
