@@ -10,9 +10,9 @@ jobs:
     runs-on: ubuntu-latest
     env:
       # Limits Gradle's daemon memory pool
-  GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m"
+     GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx2048m -XX:MaxMetaspaceSize=512m"
   # Prevents Node/Metro bundler from memory-hogging
-  NODE_OPTIONS: "--max-old-space-size=2048"
+     NODE_OPTIONS: "--max-old-space-size=2048"
     
     defaults:
       run:
