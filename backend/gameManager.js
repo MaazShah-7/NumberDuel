@@ -27,8 +27,8 @@ class GameManager {
     const player = this.players.get(socket.id);
     if (!player) return;
     
-    // We assume 100 coins per match for global matchmaking
-    const stakes = 100;
+    // Calculate stakes based on range tier
+    const stakes = range === 1000 ? 1000 : (range === 500 ? 500 : 100);
 
     if (player.coins < stakes) {
       socket.emit('error_message', 'Not enough coins');
@@ -70,7 +70,7 @@ class GameManager {
     const player = this.players.get(socket.id);
     if (!player) return;
 
-    const stakes = 100; // Fixed stakes or can be customized later
+    const stakes = range === 1000 ? 1000 : (range === 500 ? 500 : 100);
 
     if (player.coins < stakes) {
       socket.emit('error_message', 'Not enough coins');
@@ -328,3 +328,7 @@ class GameManager {
       });
       this.rooms.delete(roomId);
     }
+  }
+}
+
+module.exports = GameManager;
