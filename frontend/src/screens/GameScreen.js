@@ -127,16 +127,55 @@ export default function GameScreen({ route, navigation }) {
 
   if (phase === 'finished' && gameOverData) {
     const isWinner = gameOverData.winner === myId;
+    const isDraw = !gameOverData.winner; // Just in case we add draw later
+    
+    // Calculate total guesses
+    const totalGuesses = gameOverData.history ? gameOverData.history.length : 0;
+    
+    // Get targets
+    const myTarget = gameOverData.targets ? gameOverData.targets[myId] : '?';
+    const opponentId = gameData.players?.find(p => p.id !== myId)?.id;
+    const opponentTarget = (gameOverData.targets && opponentId) ? gameOverData.targets[opponentId] : '?';
+    const opponentName = gameData.players?.find(p => p.id !== myId)?.username || 'Opponent';
+
     return (
-      <View style={styles.container}>
-        <Text style={[styles.title, { color: isWinner ? Theme.colors.success : Theme.colors.primary }]}>
-          {isWinner ? 'Victory!' : 'Defeat!'}
+      <View style={styles.postMatchContainer}>
+        <Text style={[styles.postMatchTitle, { color: isWinner ? Theme.colors.success : '#ff4444' }]}>
+          {isWinner ? 'VICTORY' : 'DEFEAT'}
         </Text>
-        <Text style={styles.winnerText}>{gameOverData.winnerName} found the number!</Text>
-        <Text style={styles.potText}>{isWinner ? '+' : '-'}{gameOverData.pot / 2} Coins</Text>
         
-        <TouchableOpacity style={[styles.button, { marginTop: 40 }]} onPress={leaveGame}>
-          <Text style={styles.buttonText}>Return Home</Text>
+        <Text style={styles.winnerText}>
+          {isWinner ? 'You outsmarted your opponent!' : `${gameOverData.winnerName} found your number!`}
+        </Text>
+
+        <View style={styles.scoreboard}>
+          <Text style={styles.scoreboardTitle}>MATCH SCOREBOARD</Text>
+          
+          <View style={styles.scoreRow}>
+            <Text style={styles.scoreLabel}>Your Target:</Text>
+            <Text style={styles.scoreValue}>{myTarget}</Text>
+          </View>
+          
+          <View style={styles.scoreRow}>
+            <Text style={styles.scoreLabel}>{opponentName}'s Target:</Text>
+            <Text style={styles.scoreValue}>{opponentTarget}</Text>
+          </View>
+
+          <View style={styles.scoreRow}>
+            <Text style={styles.scoreLabel}>Total Turns:</Text>
+            <Text style={styles.scoreValue}>{totalGuesses}</Text>
+          </View>
+          
+          <View style={[styles.scoreRow, styles.potRow]}>
+            <Text style={styles.scoreLabel}>Coins Earned:</Text>
+            <Text style={[styles.scoreValue, { color: isWinner ? Theme.colors.success : '#ff4444' }]}>
+              {isWinner ? '+' : '-'}{gameOverData.pot / 2} 💰
+            </Text>
+          </View>
+        </View>
+
+        <TouchableOpacity style={styles.returnButton} onPress={leaveGame}>
+          <Text style={styles.returnButtonText}>RETURN TO LOBBY</Text>
         </TouchableOpacity>
       </View>
     );
@@ -273,42 +312,3 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 10,
     marginBottom: 10,
-    maxWidth: '80%',
-  },
-  historyItemMe: {
-    backgroundColor: Theme.colors.accent,
-    alignSelf: 'flex-end',
-    borderBottomRightRadius: 0,
-  },
-  historyItemOpponent: {
-    backgroundColor: Theme.colors.card,
-    alignSelf: 'flex-start',
-    borderBottomLeftRadius: 0,
-  },
-  historyName: {
-    color: '#aaa',
-    fontSize: 12,
-    marginBottom: 5,
-  },
-  historyResult: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  controls: {
-    flexDirection: 'row',
-    marginTop: 10,
-  },
-  winnerText: {
-    fontSize: 24,
-    color: Theme.colors.text,
-    textAlign: 'center',
-    marginTop: 20,
-  },
-  potText: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: Theme.colors.warning,
-    textAlign: 'center',
-    marginTop: 20,
-  }
-});
