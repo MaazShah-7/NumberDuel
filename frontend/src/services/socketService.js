@@ -2,7 +2,7 @@ import { io } from 'socket.io-client';
 
 // For local testing, use the local IP address of your machine instead of localhost
 // e.g., 'http://192.168.1.100:3000'
-const SOCKET_URL = 'http://localhost:3000'; 
+const SOCKET_URL = 'numberduel-production.up.railway.app'; 
 
 class SocketService {
   constructor() {
