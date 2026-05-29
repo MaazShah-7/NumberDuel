@@ -85,7 +85,7 @@ class GameManager {
     player.status = 'room';
     
     socket.join(roomCode);
-    socket.emit('room_created', { roomCode, stakes, range: room.range });
+    socket.emit('room_created', { roomCode, range: room.range });
   }
 
   joinPrivateRoom(socket, roomCode) {
