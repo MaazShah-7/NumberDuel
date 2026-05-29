@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { View, Text } from 'react-native';
+import { View } from 'react-native';
 
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
@@ -11,6 +11,8 @@ import HomeScreen from './src/screens/HomeScreen';
 import LobbyScreen from './src/screens/LobbyScreen';
 import GameScreen from './src/screens/GameScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import LoadingScreen from './src/screens/LoadingScreen';
+import AnimatedBackground from './src/components/AnimatedBackground';
 
 import socketService from './src/services/socketService';
 import { Theme } from './src/theme';
@@ -22,14 +24,17 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    checkToken();
+    // Artificial delay to show the nice 3D Loading Screen
+    const timer = setTimeout(() => {
+      checkToken();
+    }, 2500);
+    return () => clearTimeout(timer);
   }, []);
 
   const checkToken = async () => {
     const token = await AsyncStorage.getItem('token');
     if (token) {
       setIsAuthenticated(true);
-      // Connect and authenticate socket
       const socket = socketService.connect();
       socket.emit('authenticate', token);
     } else {
@@ -47,44 +52,58 @@ export default function App() {
   };
 
   if (isLoading) {
-    return <View style={{flex: 1, backgroundColor: Theme.colors.background}} />;
+    return (
+      <AnimatedBackground>
+        <LoadingScreen />
+      </AnimatedBackground>
+    );
   }
 
+  // Create a transparent theme so the AnimatedBackground shows through
+  const TransparentTheme = {
+    ...Theme,
+    colors: {
+      ...Theme.colors,
+      background: 'transparent',
+    },
+  };
+
   return (
-    <NavigationContainer theme={Theme}>
-      <StatusBar style="light" />
-      <Stack.Navigator 
-        screenOptions={{
-          headerStyle: { backgroundColor: '#1A1A2E' },
-          headerTintColor: '#fff',
-          headerTitleStyle: { fontWeight: 'bold' },
-          contentStyle: { backgroundColor: '#16213E' }
-        }}
-      >
-        {!isAuthenticated ? (
-          // Auth Stack
-          <>
-            <Stack.Screen name="Login" options={{ headerShown: false }}>
-              {props => <LoginScreen {...props} route={{params: {onLoginSuccess: handleLoginSuccess}}} />}
-            </Stack.Screen>
-            <Stack.Screen name="Register" options={{ headerShown: false }}>
-              {props => <RegisterScreen {...props} route={{params: {onLoginSuccess: handleLoginSuccess}}} />}
-            </Stack.Screen>
-          </>
-        ) : (
-          // Main Stack
-          <>
-            <Stack.Screen name="Home" options={{ title: 'Number Duel' }}>
-              {props => <HomeScreen {...props} />}
-            </Stack.Screen>
-            <Stack.Screen name="Profile" options={{ title: 'My Profile' }}>
-              {props => <ProfileScreen {...props} route={{params: {onLogout: handleLogout}}} />}
-            </Stack.Screen>
-            <Stack.Screen name="Lobby" component={LobbyScreen} options={{ title: 'Matchmaking' }} />
-            <Stack.Screen name="Game" component={GameScreen} options={{ headerShown: false }} />
-          </>
-        )}
-      </Stack.Navigator>
-    </NavigationContainer>
+    <AnimatedBackground>
+      <NavigationContainer theme={TransparentTheme}>
+        <StatusBar style="light" />
+        <Stack.Navigator 
+          screenOptions={{
+            headerStyle: { backgroundColor: 'rgba(15, 23, 42, 0.8)' },
+            headerTintColor: '#38BDF8',
+            headerTitleStyle: { fontWeight: '900', letterSpacing: 1 },
+            headerTransparent: true,
+            contentStyle: { backgroundColor: 'transparent' }
+          }}
+        >
+          {!isAuthenticated ? (
+            <>
+              <Stack.Screen name="Login" options={{ headerShown: false }}>
+                {props => <LoginScreen {...props} route={{params: {onLoginSuccess: handleLoginSuccess}}} />}
+              </Stack.Screen>
+              <Stack.Screen name="Register" options={{ headerShown: false }}>
+                {props => <RegisterScreen {...props} route={{params: {onLoginSuccess: handleLoginSuccess}}} />}
+              </Stack.Screen>
+            </>
+          ) : (
+            <>
+              <Stack.Screen name="Home" options={{ title: 'NUMBER DUEL', headerTransparent: false }}>
+                {props => <HomeScreen {...props} />}
+              </Stack.Screen>
+              <Stack.Screen name="Profile" options={{ title: 'PROFILE', headerTransparent: false }}>
+                {props => <ProfileScreen {...props} route={{params: {onLogout: handleLogout}}} />}
+              </Stack.Screen>
+              <Stack.Screen name="Lobby" component={LobbyScreen} options={{ title: 'MATCHMAKING', headerTransparent: false }} />
+              <Stack.Screen name="Game" component={GameScreen} options={{ headerShown: false }} />
+            </>
+          )}
+        </Stack.Navigator>
+      </NavigationContainer>
+    </AnimatedBackground>
   );
 }
