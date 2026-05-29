@@ -13,6 +13,16 @@ app.use(express.json());
 
 const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_jwt_key_for_number_duel';
 
+// Dev Verification API
+app.get('/api/dev/users', async (req, res) => {
+  try {
+    const users = await dbAll('SELECT id, username, pfp, totalScore, matchesPlayed, matchesWon, matchesLost FROM users');
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // REST API for Authentication
 app.post('/api/register', async (req, res) => {
   const { username, password } = req.body;
@@ -28,11 +38,11 @@ app.post('/api/register', async (req, res) => {
     const randomAvatar = avatars[Math.floor(Math.random() * avatars.length)];
 
     const result = await dbRun(
-      'INSERT INTO users (username, password, coins, matchesPlayed, matchesWon, matchesLost, pfp) VALUES (?, ?, 1000, 0, 0, 0, ?)',
+      'INSERT INTO users (username, password, totalScore, matchesPlayed, matchesWon, matchesLost, pfp) VALUES (?, ?, 0, 0, 0, 0, ?)',
       [username, hashedPassword, randomAvatar]
     );
 
-    const user = { id: result.lastID, username, coins: 1000, pfp: randomAvatar };
+    const user = { id: result.lastID, username, totalScore: 0, pfp: randomAvatar };
     const token = jwt.sign({ id: user.id }, JWT_SECRET);
     res.json({ user, token });
   } catch (err) {
@@ -70,16 +80,6 @@ const authenticateToken = (req, res, next) => {
     next();
   });
 };
-
-// DEV ONLY: View your database tables securely in the browser
-app.get('/api/dev/users', async (req, res) => {
-  try {
-    const users = await dbAll('SELECT id, username, password, coins, matchesPlayed, matchesWon, matchesLost FROM users');
-    res.json(users);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
 
 app.get('/api/profile', authenticateToken, async (req, res) => {
   try {
