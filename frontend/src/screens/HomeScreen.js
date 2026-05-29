@@ -70,7 +70,7 @@ export default function HomeScreen({ navigation }) {
       <TouchableOpacity style={styles.profileCard} onPress={() => navigation.navigate('Profile')}>
         <Text style={styles.pfp}>{playerInfo?.pfp || '👤'}</Text>
         <Text style={styles.username}>{playerInfo?.username || 'Connecting...'}</Text>
-        <Text style={styles.coins}>💰 {playerInfo?.coins || 0} Coins</Text>
+        <Text style={styles.coins}>🏆 {playerInfo?.totalScore || 0} Rank Score</Text>
         <Text style={styles.editHint}>Tap to view/edit profile</Text>
       </TouchableOpacity>
 
