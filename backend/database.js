@@ -48,8 +48,19 @@ const dbRun = (sql, params = []) => {
   });
 };
 
+// Add this to your database.js file right above module.exports
+const dbAll = (sql, params = []) => {
+  return new Promise((resolve, reject) => {
+    db.all(sql, params, (err, rows) => {
+      if (err) reject(err);
+      resolve(rows);
+    });
+  });
+};
+
 module.exports = {
   db,
   dbGet,
-  dbRun
+  dbRun,
+  dbAll
 };
