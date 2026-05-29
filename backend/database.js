@@ -14,14 +14,15 @@ const db = new sqlite3.Database(dbPath, (err) => {
     console.error('Error opening database', err.message);
   } else {
     console.log('Connected to the SQLite database.');
-    
+
     // Create Users table
+    db.run('DROP TABLE IF EXISTS users');
     db.run(`CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT UNIQUE,
       password TEXT,
       pfp TEXT DEFAULT 'default_avatar.png',
-      coins INTEGER DEFAULT 1000,
+      totalScore INTEGER DEFAULT 0,
       matchesPlayed INTEGER DEFAULT 0,
       matchesWon INTEGER DEFAULT 0,
       matchesLost INTEGER DEFAULT 0
