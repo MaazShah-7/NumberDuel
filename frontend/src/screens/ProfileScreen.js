@@ -54,7 +54,7 @@ export default function ProfileScreen({ navigation, route }) {
 
       {/* Stats Card */}
       <View style={styles.statsCard}>
-        <Text style={styles.statText}>🪙 Coins: {profile.coins}</Text>
+        <Text style={styles.statText}>🏆 Rank Score: {profile.totalScore || 0}</Text>
         <Text style={styles.statText}>🎮 Matches Played: {profile.matchesPlayed}</Text>
         <Text style={[styles.statText, { color: Theme.colors.success }]}>🏆 Won: {profile.matchesWon}</Text>
         <Text style={[styles.statText, { color: '#ff4444' }]}>❌ Lost: {profile.matchesLost}</Text>
