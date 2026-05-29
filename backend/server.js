@@ -4,7 +4,7 @@ const { Server } = require('socket.io');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { dbGet, dbRun } = require('./database');
+const { dbGet, dbRun, dbAll } = require('./database');
 const GameManager = require('./gameManager');
 
 const app = express();
@@ -70,6 +70,16 @@ const authenticateToken = (req, res, next) => {
     next();
   });
 };
+
+// DEV ONLY: View your database tables securely in the browser
+app.get('/api/dev/users', async (req, res) => {
+  try {
+    const users = await dbAll('SELECT id, username, coins, matchesPlayed FROM users');
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 app.get('/api/profile', authenticateToken, async (req, res) => {
   try {
