@@ -102,11 +102,6 @@ class GameManager {
       return;
     }
 
-    if (player.coins < room.stakes) {
-      socket.emit('error_message', 'Not enough coins');
-      return;
-    }
-
     room.players.push(socket.id);
     player.roomId = roomCode;
     player.status = 'room';
