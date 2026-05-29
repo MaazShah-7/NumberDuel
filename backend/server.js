@@ -23,12 +23,16 @@ app.post('/api/register', async (req, res) => {
     if (existing) return res.status(400).json({ error: 'Username already taken' });
 
     const hashedPassword = await bcrypt.hash(password, 10);
+    // Pick a random emoji avatar
+    const avatars = ['😊', '😍', '😎', '🥳', '😝', '😜', '😙', '😉', '😚', '🙂', '🙋🏻‍♂️', '🙋🏻'];
+    const randomAvatar = avatars[Math.floor(Math.random() * avatars.length)];
+
     const result = await dbRun(
-      'INSERT INTO users (username, password, coins, matchesPlayed, matchesWon, matchesLost) VALUES (?, ?, 1000, 0, 0, 0)',
-      [username, hashedPassword]
+      'INSERT INTO users (username, password, coins, matchesPlayed, matchesWon, matchesLost, pfp) VALUES (?, ?, 1000, 0, 0, 0, ?)',
+      [username, hashedPassword, randomAvatar]
     );
 
-    const user = { id: result.lastID, username, coins: 1000, pfp: 'default_avatar.png' };
+    const user = { id: result.lastID, username, coins: 1000, pfp: randomAvatar };
     const token = jwt.sign({ id: user.id }, JWT_SECRET);
     res.json({ user, token });
   } catch (err) {
@@ -173,6 +177,6 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, "0.0.0.0", () => {
+server.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
