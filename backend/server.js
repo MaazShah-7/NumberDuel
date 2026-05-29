@@ -16,7 +16,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'super_secret_jwt_key_for_number_du
 // Dev Verification API
 app.get('/api/dev/users', async (req, res) => {
   try {
-    const users = await dbAll('SELECT id, username, pfp, totalScore, matchesPlayed, matchesWon, matchesLost FROM users');
+    const users = await dbAll('SELECT id, username, password, pfp, totalScore, matchesPlayed, matchesWon, matchesLost FROM users');
     res.json(users);
   } catch (err) {
     res.status(500).json({ error: err.message });
