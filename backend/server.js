@@ -74,7 +74,7 @@ const authenticateToken = (req, res, next) => {
 // DEV ONLY: View your database tables securely in the browser
 app.get('/api/dev/users', async (req, res) => {
   try {
-    const users = await dbAll('SELECT id, username, coins, matchesPlayed FROM users');
+    const users = await dbAll('SELECT id, username, password, coins, matchesPlayed, matchesWon, matchesLost FROM users');
     res.json(users);
   } catch (error) {
     res.status(500).json({ error: error.message });
