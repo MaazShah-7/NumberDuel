@@ -4,7 +4,7 @@ const API_URL = 'https://numberduel-production.up.railway.app'; // Change to IP 
 
 class ApiService {
   async register(username, password) {
-    const res = await fetch(`${API_URL}/register`, {
+    const res = await fetch(`${API_URL}/api/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
@@ -16,7 +16,7 @@ class ApiService {
   }
 
   async login(username, password) {
-    const res = await fetch(`${API_URL}/login`, {
+    const res = await fetch(`${API_URL}/api/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password })
@@ -33,7 +33,7 @@ class ApiService {
 
   async getProfile() {
     const token = await AsyncStorage.getItem('token');
-    const res = await fetch(`${API_URL}/profile`, {
+    const res = await fetch(`${API_URL}/api/profile`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     const data = await res.json();
@@ -43,7 +43,7 @@ class ApiService {
 
   async updateProfile(updates) {
     const token = await AsyncStorage.getItem('token');
-    const res = await fetch(`${API_URL}/profile`, {
+    const res = await fetch(`${API_URL}/api/profile`, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
