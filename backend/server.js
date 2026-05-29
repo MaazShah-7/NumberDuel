@@ -113,7 +113,7 @@ app.post('/api/profile', authenticateToken, async (req, res) => {
       [newUsername, newPassword, newPfp, req.user.id]
     );
 
-    const updatedUser = await dbGet('SELECT id, username, pfp, coins, matchesPlayed, matchesWon, matchesLost FROM users WHERE id = ?', [req.user.id]);
+    const updatedUser = await dbGet('SELECT id, username, pfp, totalScore, matchesPlayed, matchesWon, matchesLost FROM users WHERE id = ?', [req.user.id]);
     res.json(updatedUser);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -137,7 +137,7 @@ io.on('connection', (socket) => {
   socket.on('authenticate', async (token) => {
     try {
       const decoded = jwt.verify(token, JWT_SECRET);
-      const user = await dbGet('SELECT id, username, pfp, coins, matchesPlayed, matchesWon, matchesLost FROM users WHERE id = ?', [decoded.id]);
+      const user = await dbGet('SELECT id, username, pfp, totalScore, matchesPlayed, matchesWon, matchesLost FROM users WHERE id = ?', [decoded.id]);
       if (user) {
         await gameManager.registerPlayer(socket, user);
       } else {
