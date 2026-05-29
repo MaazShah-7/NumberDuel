@@ -1,62 +1,59 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet, Animated, Easing, Image } from 'react-native';
 
 export default function LoadingScreen() {
-  const rotateAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.5)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // 3D Rotation Loop
+    // Sound visualizer pulse loop
     Animated.loop(
-      Animated.timing(rotateAnim, {
-        toValue: 1,
-        duration: 2000,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      })
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.15,
+          duration: 400,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 0.95,
+          duration: 300,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 200,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: true,
+        })
+      ])
     ).start();
 
-    // Fade and Scale In
-    Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        friction: 4,
-        tension: 20,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacityAnim, {
-        toValue: 1,
-        duration: 1000,
-        useNativeDriver: true,
-      })
-    ]).start();
+    // Fade In
+    Animated.timing(opacityAnim, {
+      toValue: 1,
+      duration: 1000,
+      useNativeDriver: true,
+    }).start();
   }, []);
-
-  const spin = rotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg']
-  });
-
-  // Adding a Y-axis rotation for a 3D effect
-  const spinY = rotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '180deg']
-  });
 
   return (
     <View style={styles.container}>
       <Animated.View style={[
-        styles.logo3D,
+        styles.logoWrapper,
         { 
           opacity: opacityAnim,
           transform: [
-            { scale: scaleAnim },
-            { rotateY: spinY }, // 3D flip effect
+            { scale: pulseAnim }
           ]
         }
       ]}>
-        <Text style={styles.logoTextHighlight}>DUEL</Text>
+        <Image 
+          source={require('../../assets/circle-logo.png')} 
+          style={styles.logoImage}
+          resizeMode="contain"
+        />
       </Animated.View>
       <View style={styles.logoShadow} />
       
@@ -74,34 +71,28 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  logo3D: {
-    backgroundColor: '#1E293B',
-    paddingVertical: 30,
-    paddingHorizontal: 40,
-    borderRadius: 20,
-    borderWidth: 2,
-    borderColor: '#38BDF8',
+  logoWrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#38BDF8',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.8,
-    shadowRadius: 20,
+    shadowColor: '#FF4B1F', // primaryOrange glow
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 30,
     elevation: 20,
     zIndex: 2,
+    borderRadius: 100, // Makes the glow circular
+    backgroundColor: 'rgba(255, 75, 31, 0.1)', // slight inner glow tint
   },
-  logoTextHighlight: {
-    fontSize: 50,
-    fontWeight: '900',
-    color: '#38BDF8',
-    letterSpacing: 2,
+  logoImage: {
+    width: 200,
+    height: 200,
   },
   logoShadow: {
     position: 'absolute',
-    bottom: '40%',
-    width: 100,
-    height: 15,
-    backgroundColor: 'rgba(56, 189, 248, 0.4)',
+    bottom: '35%',
+    width: 120,
+    height: 20,
+    backgroundColor: 'rgba(255, 75, 31, 0.3)',
     borderRadius: 100,
     transform: [{ scaleY: 0.3 }],
   },
@@ -109,7 +100,7 @@ const styles = StyleSheet.create({
     marginTop: 60,
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#94A3B8',
+    color: '#FFFFFF',
     letterSpacing: 4,
   }
 });
