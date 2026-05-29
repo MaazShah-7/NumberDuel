@@ -2,14 +2,20 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 const fs = require('fs');
 
-// Ensure the data directory exists
-const dataDir = path.join(__dirname, 'data');
+// Use the explicit Railway volume directory in production, default to local folder in dev
+const dataDir = process.env.NODE_ENV === 'production' 
+  ? '/app/data' 
+  : path.join(__dirname, 'data');
+
 if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir);
+  fs.mkdirSync(dataDir, { recursive: true });
 }
 
 const dbPath = path.join(dataDir, 'database.sqlite');
+console.log(`Database is initializing at absolute path: ${dbPath}`);
+
 const db = new sqlite3.Database(dbPath, (err) => {
+  // ... rest of your code stays exactly the same
   if (err) {
     console.error('Error opening database', err.message);
   } else {
