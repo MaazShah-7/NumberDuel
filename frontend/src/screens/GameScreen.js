@@ -167,9 +167,9 @@ export default function GameScreen({ route, navigation }) {
           </View>
           
           <View style={[styles.scoreRow, styles.potRow]}>
-            <Text style={styles.scoreLabel}>Coins Earned:</Text>
+            <Text style={styles.scoreLabel}>Points Earned:</Text>
             <Text style={[styles.scoreValue, { color: isWinner ? Theme.colors.success : '#ff4444' }]}>
-              {isWinner ? '+' : '-'}{gameOverData.pot / 2} 💰
+              {isWinner ? '+' : '-'}{gameOverData.scoreEarned} 🏆
             </Text>
           </View>
         </View>
