@@ -69,30 +69,28 @@ export default function AnimatedBackground({ children }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0F172A', // Base slate color
+    backgroundColor: '#060A17', // Base dark color
   },
   blob: {
     position: 'absolute',
     width: width * 1.5,
     height: width * 1.5,
     borderRadius: width,
-    opacity: 0.4,
-    // Note: React Native blur requires external libraries like expo-blur,
-    // so we simulate the soft 3D gradient look with large soft shapes and an overlay.
+    opacity: 0.3,
   },
   blob1: {
     top: -width * 0.5,
     left: -width * 0.5,
-    backgroundColor: '#0284C7', // Deep blue
+    backgroundColor: '#007BFF', // Vivid Blue
   },
   blob2: {
     bottom: -width * 0.5,
     right: -width * 0.5,
-    backgroundColor: '#38BDF8', // Light sky blue
+    backgroundColor: '#8B5CF6', // Deep Purple
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(15, 23, 42, 0.7)', // Slate overlay
+    backgroundColor: 'rgba(6, 10, 23, 0.8)', // Slightly darker overlay for a sleeker look
   },
   content: {
     flex: 1,
