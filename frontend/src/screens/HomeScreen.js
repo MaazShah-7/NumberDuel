@@ -83,7 +83,7 @@ export default function HomeScreen({ navigation }) {
             onPress={() => setRange(tier.toString())}
           >
             <Text style={[styles.tierText, parseInt(range) === tier && styles.tierTextActive]}>1 - {tier}</Text>
-            <Text style={styles.tierSubText}>{tier} Coins</Text>
+            <Text style={styles.tierSubText}>Ranked Tier</Text>
           </TouchableOpacity>
         ))}
       </View>
