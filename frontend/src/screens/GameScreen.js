@@ -212,7 +212,7 @@ export default function GameScreen({ route, navigation }) {
           editable={turn === myId}
         />
         <TouchableOpacity 
-          style={[styles.button, { opacity: turn === myId ? 1 : 0.5 }]} 
+          style={[styles.button, { flex: 1, width: 'auto', opacity: turn === myId ? 1 : 0.5 }]} 
           onPress={submitGuess}
           disabled={turn !== myId}
         >
@@ -226,7 +226,7 @@ export default function GameScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Theme.colors.background,
+    backgroundColor: 'transparent',
     padding: 20,
     paddingTop: 50,
   },
@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
   },
   postMatchContainer: {
     flex: 1,
-    backgroundColor: '#0F172A',
+    backgroundColor: 'transparent',
     padding: 20,
     justifyContent: 'center',
     alignItems: 'center',
